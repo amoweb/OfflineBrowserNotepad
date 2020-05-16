@@ -187,7 +187,7 @@ function readContentsLocally() {
 	var contents = window.localStorage.getItem('note' + noteName);
 
 	if(contents == null) {
-		alert('Not found locally');
+		window.editor.setData("<b>Not found in local cache.</b>");
 	} else {
 		window.editor.setData(contents);
 	}
