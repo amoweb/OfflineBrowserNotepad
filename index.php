@@ -17,6 +17,10 @@ html, body, .container {
 
 <script type="text/javascript">
 
+    function setStatus(s) {
+        document.getElementById("status").innerHTML = s;
+    }
+
     function getNoteNameFromHash() {
         var h = window.location.hash;
         var posEnd = h.lastIndexOf('@');
@@ -65,6 +69,7 @@ html, body, .container {
 <body>
 
 <b><div id="noteName"></div></b>
+<b><div id="status"></div></b>
 Serv{
 <a  href="javascript:saveContentsOnline();">Put</a>
 <a  href="javascript:readContentsOnline();">Get</a>
@@ -82,6 +87,7 @@ Local{
 <textarea id="editor" name="editor" style="min-width: 100%; height: 90%;"></textarea>
 
 <b><div id="noteName"></div></b>
+<b><div id="status"></div></b>
 Serv{
 <a  href="javascript:saveContentsOnline();">Put</a>
 <a  href="javascript:readContentsOnline();">Get</a>
@@ -105,6 +111,8 @@ ClassicEditor
 	} )
 	.then( editor => {
 		window.editor = editor;
+        onHashChangeDo();
+        window.onhashchange = onHashChangeDo;
 	} )
 	.catch( err => {
 		console.error( err.stack );
@@ -120,6 +128,7 @@ function saveContentsOnline() {
 	if(navigator.onLine) {
 		var params = "contents=" + encodeURIComponent(contents);
 
+        setStatus("PUT");
 		const Http = new XMLHttpRequest();
         const url = "recorder.php?nocache=" + (new Date()).getTime() + "&id=" + noteName;
 		Http.open("POST", url, true);
@@ -131,6 +140,7 @@ function saveContentsOnline() {
 			console.log(this.responseText);
             pre = 0;
             window.location.hash = getNoteNameFromHash();
+            setStatus("");
 		};
 
 		Http.send(params);
@@ -144,9 +154,11 @@ function readContentsOnline() {
 		const Http = new XMLHttpRequest();
         const url = "recorder.php?nocache=" + (new Date()).getTime() + "&id=" + noteName + "&pre=" + pre;
 		Http.open("GET", url);
+        setStatus("GET");
 
 		Http.onreadystatechange = (e) => {
             window.editor.setData(Http.responseText);
+            setStatus("");
 		}
 		Http.send();
 	} else {
@@ -177,10 +189,11 @@ function clearContents() {
 function saveContentsLocally() {
 	var contents = window.editor.getData();
 
-	if(contents.length == 0) {
-		return;
-	}
 	window.localStorage.setItem('note' + noteName, contents);
+}
+
+function localContentsExists() {
+	return ( window.localStorage.getItem('note' + noteName) != null);
 }
 
 function readContentsLocally() {
@@ -195,10 +208,10 @@ function readContentsLocally() {
 
 function loadContents() {
     // Initial data request
-    if(navigator.onLine) {
-        readContentsOnline();
-    } else {
+    if(localContentsExists()) {
         readContentsLocally();
+    } else {
+        readContentsOnline();
     }
 }
 
@@ -214,10 +227,6 @@ function onHashChangeDo() {
 
     loadContents();
 }
-
-
-onHashChangeDo();
-window.onhashchange = onHashChangeDo;
 
 </script>
 
